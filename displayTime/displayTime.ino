@@ -37,8 +37,8 @@ void setup() {
 }
 
 void loop() {
-  // tape is LOW
-  // geen tape, dus grond is HIGH
+  // tape is HIGH
+  // geen tape, dus grond is LOW
   if(startTimer) {
     moveWheels(120, 0, 120, 0);
     timer = millis();

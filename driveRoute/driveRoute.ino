@@ -16,13 +16,13 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 MPU6050 mpu(Wire);
 
 long timer = 0;
-boolean startTimer = true;
+int startTimer = 0;
 boolean endTimer = false;
 boolean start1 = false;
 boolean firstTime = true;
 int timeForOneMeter;
 // distance1 en z1 worden uit de dataabase gehaald
-int distance1 = 3;
+int distance1 = 2;
 int z1 = 0;
 long timer1 = 0;
 
@@ -46,14 +46,14 @@ void setup() {
   lcd.clear();
   
   // beginnen met rijden
-  moveWheels(120, 0, 125, 0);
+  moveWheels(120, 0, 130, 0);
   // huidige tijd vastleggen
   startTimer = millis();
 }
 
 void loop() {
-  //measureTimeForOneMeter();
-  //driveRoute();
+  measureTimeForOneMeter();
+  driveRoute();
 }
 
 void moveWheels(int leftForwardSpeed, int leftBackwardSpeed, int rightForwardSpeed, int rightBackwardSpeed) {
@@ -73,11 +73,11 @@ void measureTimeForOneMeter() {
   if(!endTimer && digitalRead(L_IR) && digitalRead(R_IR)) {
     // timeForOneMeter is de tijd die de robot doet over één meter, in milliseconden
     timeForOneMeter = (millis() - startTimer);
+    lcd.print(timeForOneMeter);
     // stop huidige loop
     endTimer = true;
     // start volgende loop
     start1 = true;
-    lcd.print(timeForOneMeter);
   }
 }
 
@@ -87,37 +87,34 @@ void measureTimeForOneMeter() {
  */
 void driveRoute() {
   if(start1) {
-    // for each item in the database
-    for(int x = 0; x < 1; x++) {
-      // de robot in beweging zetten. Het corrigeren komt later
-      moveWheels(120, 0, 125, 0);
-      // distance1 in meters wordt uit de database gehaald
-      // afhankelijk van of de snelheid wordt gemeten of niet
-      int tmpDistance;
-      if(firstTime) {
-        tmpDistance = distance1 - 1;
-        firstTime = false;
-      } else {
-        tmpDistance = distance1;
-      }
-      // timeToDrive1 is de tijd die de robot moet rijden voor distance1
-      // de tijd is in milliseconden
-      float timeToDrive1 = (tmpDistance * timeForOneMeter);
-      lcd.setCursor(0, 1);
-      lcd.print(timeToDrive1);
-      // for-loop om robot voor een bepaalde tijd "op te houden",
-      // dan rijd de bot voor een bepaalde tijd lang
-      for(float t = 0.0; t < timeToDrive1; t++) {
-        lcd.setCursor(0, 1);
-        lcd.print(t);
-        // tijdens het rijden bij laten draaien
-        turn(z1);
-        delay(1);
-      }
-      moveWheels(0, 0, 0, 0);
-      // ipv de boolean op false te zetten moet nu het volgende item uit de database worden geladen
-      start1 = false;
+    // de robot in beweging zetten. Het corrigeren komt later
+    moveWheels(120, 0, 130, 0);
+    // distance1 in meters wordt uit de database gehaald
+    // afhankelijk van of de snelheid wordt gemeten of niet
+    int tmpDistance;
+    if(firstTime) {
+      tmpDistance = distance1 - 1;
+      firstTime = false;
+    } else {
+      tmpDistance = distance1;
     }
+    // timeToDrive1 is de tijd die de robot moet rijden voor distance1
+    // de tijd is in milliseconden
+    float timeToDrive1 = (tmpDistance * (timeForOneMeter / 20));
+    lcd.setCursor(6, 0);
+    lcd.print(timeToDrive1);
+    // for-loop om robot voor een bepaalde tijd "op te houden",
+    // dan rijd de bot voor een bepaalde tijd lang
+    for(float t = 0.0; t < timeToDrive1; t++) {
+      lcd.setCursor(0, 1);
+      lcd.print(t);
+      // tijdens het rijden bij laten draaien
+      //turn(z1);
+      delay(50);
+    }
+    moveWheels(0, 0, 0, 0);
+    // ipv de boolean op false te zetten moet nu het volgende item uit de database worden geladen
+    start1 = false;
   }
 }
 
@@ -127,7 +124,6 @@ void driveRoute() {
  * @param De hoek die uit de database wordt gehaald
  */
 void turn(int z) {
-  moveWheels(120, 0, 125, 0);
   mpu.update();
   int currAngle = mpu.getGyroAngleZ();
   // ideaal gezien zit z heel dicht bij currAngle

@@ -7,11 +7,7 @@
 #define RF 9         // right motor forward
 #define RB 4         // right motor backward
 
-int timeForOneMeter;
-long timer = 0;
-int startTimer = 0;
-boolean endTimer, start = false;
-boolean firstTime = true;
+
 
 void setup() {
   pinMode(LF, OUTPUT);   //left motors forward
@@ -40,20 +36,30 @@ void moveWheels(int leftForwardSpeed, int leftBackwardSpeed, int rightForwardSpe
  * ervan uitgaande dat de robot de goede richting op staat
  * @param distance De af te leggen afstand van spel naar spel in meters
  */
-void vanSpelNaarSpel(int distance) {  
-  if(firstTime) {
-    // beginnen met rijden
-    moveWheels(120, 0, 130, 0);
-    // huidige tijd vastleggen
-    startTimer = millis();
-    firstTime = false;
-  }
+void vanSpelNaarSpel(int distance) {
+  int timeForOneMeter;
+  long timer = 0;
+  int startTimer = 0;
+  boolean endTimer, start = false;
+  boolean firstTime = true;
 
-  // tijd meten die de robot over één meter doet
-  if(!endTimer && digitalRead(L_IR) && digitalRead(R_IR)) {
-    int timeForOneMeter = (millis() - startTimer); // timeForOneMeter is de tijd die de robot doet over één meter, in milliseconden
-    endTimer = true; // stop huidige loop
-    start = true; // start volgende loop
+  // De while loop zorgt ervoor dat de robot voor één meter lang "gevangen" zit. Er moet nl.
+  // voorkomen worden dat de local variables gereset worden doordat de method opnieuw wordt aangeroepen
+  while(!start) {
+    if(firstTime) {
+      // beginnen met rijden
+      moveWheels(120, 0, 130, 0);
+      // huidige tijd vastleggen
+      startTimer = millis();
+      firstTime = false;
+    }
+
+    // tijd meten die de robot over één meter doet
+    if(!endTimer && digitalRead(L_IR) && digitalRead(R_IR)) {
+      int timeForOneMeter = (millis() - startTimer); // timeForOneMeter is de tijd die de robot doet over één meter, in milliseconden
+      endTimer = true; // stop huidige loop
+      start = true; // start volgende loop
+    }
   }
   
   if(start) {

@@ -1,7 +1,3 @@
-#include <MPU6050_tockn.h>
-#include <LiquidCrystal_I2C.h>
-#include <Wire.h>
-
 #define L_IR 10      // left infrared sensor
 #define R_IR 11      // right infrared sensor
 
@@ -11,22 +7,11 @@
 #define RF 9         // right motor forward
 #define RB 4         // right motor backward
 
-LiquidCrystal_I2C lcd(0x27, 16, 2);
-
-MPU6050 mpu(Wire);
-
+int timeForOneMeter;
 long timer = 0;
 int startTimer = 0;
-boolean endTimer = false;
-boolean start1 = false;
+boolean endTimer, start = false;
 boolean firstTime = true;
-int timeForOneMeter;
-// distance1 en z1 worden uit de dataabase gehaald
-int distance1 = 2;
-int z1 = 0;
-long timer1 = 0;
-
-int modifySpeed = 120;
 
 void setup() {
   pinMode(LF, OUTPUT);   //left motors forward
@@ -36,24 +21,10 @@ void setup() {
 
   pinMode(L_IR, INPUT);
   pinMode(R_IR, INPUT);
-
-  Serial.begin(9600);
-  mpu.begin();
-  mpu.calcGyroOffsets(true);
-  
-  lcd.init();
-  lcd.backlight();
-  lcd.clear();
-  
-  // beginnen met rijden
-  moveWheels(120, 0, 130, 0);
-  // huidige tijd vastleggen
-  startTimer = millis();
 }
 
 void loop() {
-  measureTimeForOneMeter();
-  driveRoute();
+  vanSpelNaarSpel(3);
 }
 
 void moveWheels(int leftForwardSpeed, int leftBackwardSpeed, int rightForwardSpeed, int rightBackwardSpeed) {
@@ -63,78 +34,36 @@ void moveWheels(int leftForwardSpeed, int leftBackwardSpeed, int rightForwardSpe
   analogWrite(RB, rightBackwardSpeed);
 }
 
-/*
- * Meet de tijd die de bot doet over één meter rijden
- * @return De tijd die de bot over één meter rijden doet in milliseconden
- */
-void measureTimeForOneMeter() {
-  // tape is HIGH
-  // geen tape, dus grond is LOW
-  if(!endTimer && digitalRead(L_IR) && digitalRead(R_IR)) {
-    // timeForOneMeter is de tijd die de robot doet over één meter, in milliseconden
-    timeForOneMeter = (millis() - startTimer);
-    lcd.print(timeForOneMeter);
-    // stop huidige loop
-    endTimer = true;
-    // start volgende loop
-    start1 = true;
-  }
-}
-
 /**
- * Deze functie laat de robot een bepaalde afstand afleggen,
- * afhankelijk van een stuke tape op een bepaalde afstand (één meter)
+ * Laat de robot een bepaalde afstand afleggen van spel naar spel,
+ * afhankelijk van een stuke tape op een bepaalde afstand (één meter) en
+ * ervan uitgaande dat de robot de goede richting op staat
+ * @param distance De af te leggen afstand van spel naar spel in meters
  */
-void driveRoute() {
-  if(start1) {
-    // de robot in beweging zetten. Het corrigeren komt later
+void vanSpelNaarSpel(int distance) {  
+  if(firstTime) {
+    // beginnen met rijden
     moveWheels(120, 0, 130, 0);
-    // distance1 in meters wordt uit de database gehaald
-    // afhankelijk van of de snelheid wordt gemeten of niet
-    int tmpDistance;
-    if(firstTime) {
-      tmpDistance = distance1 - 1;
-      firstTime = false;
-    } else {
-      tmpDistance = distance1;
-    }
-    // timeToDrive1 is de tijd die de robot moet rijden voor distance1
-    // de tijd is in milliseconden
-    float timeToDrive1 = (tmpDistance * (timeForOneMeter / 20));
-    lcd.setCursor(6, 0);
-    lcd.print(timeToDrive1);
-    // for-loop om robot voor een bepaalde tijd "op te houden",
-    // dan rijd de bot voor een bepaalde tijd lang
-    for(float t = 0.0; t < timeToDrive1; t++) {
-      lcd.setCursor(0, 1);
-      lcd.print(t);
-      // tijdens het rijden bij laten draaien
-      //turn(z1);
+    // huidige tijd vastleggen
+    startTimer = millis();
+    firstTime = false;
+  }
+
+  // tijd meten die de robot over één meter doet
+  if(!endTimer && digitalRead(L_IR) && digitalRead(R_IR)) {
+    int timeForOneMeter = (millis() - startTimer); // timeForOneMeter is de tijd die de robot doet over één meter, in milliseconden
+    endTimer = true; // stop huidige loop
+    start = true; // start volgende loop
+  }
+  
+  if(start) {
+    int distanceToDrive = distance - 1; // de robot heeft al één meter gereden
+    moveWheels(120, 0, 130, 0);
+    float timeToDrive = (distanceToDrive * (timeForOneMeter / 20));  // timeToDrive is de tijd in milliseconden die de robot moet rijden voor distanceToDrive
+    for(float t = 0.0; t < timeToDrive; t++) { // for-loop om robot voor een bepaalde tijd "op te houden", dan rijd de bot voor een bepaalde tijd lang
       delay(50);
     }
     moveWheels(0, 0, 0, 0);
-    // ipv de boolean op false te zetten moet nu het volgende item uit de database worden geladen
-    start1 = false;
+    start = false;
   }
-}
-
-/**
- * Deze functie zorgt ervoor dat de robot afhankelijk van
- * de gyroscoop rechtuit blijf rijden
- * @param De hoek die uit de database wordt gehaald
- */
-void turn(int z) {
-  mpu.update();
-  int currAngle = mpu.getGyroAngleZ();
-  // ideaal gezien zit z heel dicht bij currAngle
-  // currAngle wordt groter naarmate de robot naar links draait
-  // en kleiner naarmate je naar rechts draait
-  if(currAngle < z) {
-    // naar links
-    modifySpeed -= 5;
-  } else {
-    // naar rechts
-    modifySpeed += 5;
-  }
-  moveWheels(modifySpeed, 0, 125, 0);
 }

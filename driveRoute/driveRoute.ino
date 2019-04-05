@@ -7,8 +7,6 @@
 #define RF 9         // right motor forward
 #define RB 4         // right motor backward
 
-
-
 void setup() {
   pinMode(LF, OUTPUT);   //left motors forward
   pinMode(LB, OUTPUT);   //left motors reverse
@@ -40,20 +38,21 @@ void vanSpelNaarSpel(int distance) {
   int timeForOneMeter;
   long timer = 0;
   int startTimer = 0;
-  boolean endTimer, start = false;
+  boolean endTimer = false;
+  boolean start = false;
   boolean firstTime = true;
-
+  
   // De while loop zorgt ervoor dat de robot voor één meter lang "gevangen" zit. Er moet nl.
   // voorkomen worden dat de local variables gereset worden doordat de method opnieuw wordt aangeroepen
   while(!start) {
     if(firstTime) {
       // beginnen met rijden
-      moveWheels(120, 0, 130, 0);
+      moveWheels(120, 0, 150, 0);
       // huidige tijd vastleggen
       startTimer = millis();
       firstTime = false;
     }
-
+    
     // tijd meten die de robot over één meter doet
     if(!endTimer && digitalRead(L_IR) && digitalRead(R_IR)) {
       int timeForOneMeter = (millis() - startTimer); // timeForOneMeter is de tijd die de robot doet over één meter, in milliseconden
@@ -64,7 +63,7 @@ void vanSpelNaarSpel(int distance) {
   
   if(start) {
     int distanceToDrive = distance - 1; // de robot heeft al één meter gereden
-    moveWheels(120, 0, 130, 0);
+    moveWheels(120, 0, 150, 0);
     int timeToDrive = distanceToDrive * timeForOneMeter;  // timeToDrive is de tijd in milliseconden die de robot moet rijden voor distanceToDrive
     delay(timeToDrive);  // delay om robot voor een bepaalde tijd op te houden, dan rijd de bot voor een bepaalde tijd lang
     moveWheels(0, 0, 0, 0);

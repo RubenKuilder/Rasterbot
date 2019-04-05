@@ -65,10 +65,8 @@ void vanSpelNaarSpel(int distance) {
   if(start) {
     int distanceToDrive = distance - 1; // de robot heeft al één meter gereden
     moveWheels(120, 0, 130, 0);
-    float timeToDrive = (distanceToDrive * (timeForOneMeter / 20));  // timeToDrive is de tijd in milliseconden die de robot moet rijden voor distanceToDrive
-    for(float t = 0.0; t < timeToDrive; t++) { // for-loop om robot voor een bepaalde tijd "op te houden", dan rijd de bot voor een bepaalde tijd lang
-      delay(50);
-    }
+    int timeToDrive = distanceToDrive * timeForOneMeter;  // timeToDrive is de tijd in milliseconden die de robot moet rijden voor distanceToDrive
+    delay(timeToDrive);  // delay om robot voor een bepaalde tijd op te houden, dan rijd de bot voor een bepaalde tijd lang
     moveWheels(0, 0, 0, 0);
     start = false;
   }
